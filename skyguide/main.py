@@ -1,4 +1,4 @@
-import yolo
+import yolo # This runs the init
 
 def main():
     pass
