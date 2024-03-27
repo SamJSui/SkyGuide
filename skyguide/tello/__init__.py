@@ -1,13 +1,8 @@
-from djitellopy import Tello
+import asyncio
+from tello_asyncio import Tello
 
-import time
+class Drone:
 
-tello = Tello()
-
-tello.connect()
-tello.takeoff()
-tello.move_up(80)
-print(f'Battery: {tello.get_battery()}%')
-
-tello.streamon()
-time.sleep(2)
+    def __init__(self):
+        self.tello = Tello()
+        self.tello.video
