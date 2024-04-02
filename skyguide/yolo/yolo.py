@@ -10,9 +10,12 @@ class yolo:
 
         self.height, self.width, channels = test_frame.shape
 
-    def box_frame(self, frame):
+    def get_boxes(self, frame):
         outs = self._detect_objects(frame)
         class_ids, confidences, boxes = self._process_detections(frame, outs)
+        return class_ids, confidences, boxes
+
+    def box_frame(self, frame, class_ids, confidences, boxes):
         frame = self._draw_boxes(frame, class_ids, confidences, boxes)
         return frame
 
