@@ -8,7 +8,7 @@ from tello_asyncio import Tello, VIDEO_URL
 print("[main thread] START")
 
 # global
-RECORDING = False
+RECORDING = True
 
 ###############################################
 ###                                         ###
@@ -29,31 +29,19 @@ def fly():
             await asyncio.sleep(1)
             await drone.connect()
             await drone.start_video(connect=False)
-            RECORDING = True
-            await drone.takeoff()
+            await drone.takeoff() # IMPORTANT
 
-            while True:
-                if RECORDING == False:
-                    break
-                await drone.move_up(20)
-                await drone.move_down(20)
-                await drone.turn_counterclockwise(30)
-                await drone.turn_clockwise(60)
+            while RECORDING:
                 await drone.turn_counterclockwise(30)
             await drone.land()
         finally:
             await drone.stop_video()
-            RECORDING = False
             await drone.disconnect()
 
     # Python 3.7+
     asyncio.run(main())
 
     print("[fly thread] END")
-
-
-# # needed for drone.wifi_wait_for_network() in worker thread in Python < 3.8
-# asyncio.get_child_watcher()
 
 fly_thread = Thread(target=fly, daemon=True)
 fly_thread.start()
@@ -82,16 +70,13 @@ try:
         if cv2.waitKey(1) != -1:
             break
 except KeyboardInterrupt:
-    pass
+    RECORDING = False
+    fly_thread.join()
 finally:
     print('tidy up')
     if capture:
         capture.release()
     cv2.destroyAllWindows()
-
-    # needs further testing
-    RECORDING = False
-    fly_thread.join()
 
 
 print("[main thread] END")
