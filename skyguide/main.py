@@ -7,26 +7,43 @@ from tello_asyncio import Tello, VIDEO_URL
 
 print("[main thread] START")
 
+# global
+RECORDING = False
+
 ###############################################
 ###                                         ###
 ###     Drone Control in Worker Thread      ###
 ###                                         ###
 ###############################################
 
+
+# IMPORTANT #
+# Currently trying to get the fly thred to gracefully exit with the program
 def fly():
     print("[fly thread] START")
 
     async def main():
+        global RECORDING
         drone = Tello()
         try:
+            await asyncio.sleep(1)
             await drone.connect()
+            await drone.start_video(connect=False)
+            RECORDING = True
             await drone.takeoff()
+
             while True:
+                if RECORDING == False:
+                    break
                 await drone.move_up(20)
                 await drone.move_down(20)
-        finally:
+                await drone.turn_counterclockwise(30)
+                await drone.turn_clockwise(60)
+                await drone.turn_counterclockwise(30)
             await drone.land()
+        finally:
             await drone.stop_video()
+            RECORDING = False
             await drone.disconnect()
 
     # Python 3.7+
@@ -50,6 +67,7 @@ fly_thread.start()
 print(f"[main thread] OpenCV capturing video from {VIDEO_URL}")
 
 capture = cv2.VideoCapture(VIDEO_URL)
+capture.open(VIDEO_URL)
 grabbed, test_frame = capture.read()
 if grabbed:
     model = yolo(test_frame)
@@ -57,8 +75,8 @@ if grabbed:
 try:
     while True:
         grabbed, frame = capture.read()
-        frame = model.box_frame(frame)
         if grabbed:
+            frame = model.box_frame(frame)
             cv2.imshow("tello-asyncio", frame)
 
         if cv2.waitKey(1) != -1:
@@ -66,9 +84,14 @@ try:
 except KeyboardInterrupt:
     pass
 finally:
-    # tidy up
+    print('tidy up')
     if capture:
         capture.release()
     cv2.destroyAllWindows()
+
+    # needs further testing
+    RECORDING = False
+    fly_thread.join()
+
 
 print("[main thread] END")
