@@ -32,7 +32,7 @@ def fly():
             await drone.takeoff() # IMPORTANT
 
             while RECORDING:
-                await drone.turn_counterclockwise(30)
+                await drone.turn_counterclockwise(0)
             await drone.land()
         finally:
             await drone.stop_video()
@@ -70,10 +70,11 @@ try:
         if cv2.waitKey(1) != -1:
             break
 except KeyboardInterrupt:
-    RECORDING = False
-    fly_thread.join()
+    pass
 finally:
     print('tidy up')
+    RECORDING = False
+    fly_thread.join()
     if capture:
         capture.release()
     cv2.destroyAllWindows()
