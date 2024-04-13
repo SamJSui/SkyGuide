@@ -9,6 +9,7 @@ print("[main thread] START")
 
 # Global
 RECORDING = True
+CENTER = 480, 300, 300
 command_queue = Queue()
 
 ###############################################
@@ -32,15 +33,41 @@ def fly(command_queue):
 
     async def main():
         global RECORDING
+        global CENTER
+        vertical = forwardBackward = rotation = 0
         drone = Tello()
         try:
             await asyncio.sleep(1)
             await drone.connect()
             await drone.start_video(connect=False)
             await drone.takeoff()
+            await drone.set_speed(10)
             await drone.move_up(80)
             while RECORDING:  # Use RECORDING to control the loop
-                await check_commands(drone)  # Await the check_commands directly
+                x, y, w = CENTER
+                if x > 530:
+                    rotation = +30           
+                elif x < 430:
+                    rotation = -30
+                else:
+                    rotation = 0
+                
+                # Y movement logic #
+                # if y > 350: 
+                #     vertical = -20 
+                # elif y < 250: 
+                #     vertical = 20 
+                # else:
+                #     vertical = 0
+                    
+                if w > 500:
+                    forwardBackward = -15
+                elif w < 300:
+                    forwardBackward = 15
+                else:
+                    forwardBackward = 0
+                await drone.remote_control(0, forwardBackward, 0, rotation)
+                await asyncio.sleep(1)
         finally:
             await drone.land()
             await drone.stop_video()
@@ -73,15 +100,12 @@ try:
         if grabbed:
             class_ids, confidences, boxes = model.get_boxes(frame)
 
-            if len(boxes) > 0 and command_queue._qsize() < 2:
-                frame_center = frame.shape[1] // 2  # Corrected for width
-                box_center = boxes[0][0] + (boxes[0][2] // 2)
-                if box_center > frame_center:
-                    command_queue.put('t_r')
-                elif box_center < frame_center:
-                    command_queue.put('t_l')
-                else:
-                    command_queue.put('t_0')
+            if len(boxes) > 0:
+                x, y, w, h = boxes[0]
+                print(f'x = {x}, y = {y}, w = {w}, h = {h}')
+                CENTER = (x + x/2), (y + h/2), w
+            else:
+                CENTER = 480, 300, 300
 
             # Display frame with bounding boxes
             frame = model.box_frame(frame, class_ids, confidences, boxes)
