@@ -1,10 +1,12 @@
+from ._constants import *
+
 import cv2
 import numpy as np
 
 class yolo:
 
     def __init__(self, test_frame):
-        self.net = cv2.dnn.readNet("skyguide/yolo/yolov3.weights", "skyguide/yolo/darknet/cfg/yolov3.cfg")
+        self.net = cv2.dnn.readNet(YOLO_WEIGHTS_PATH, YOLO_CFG_PATH)
         layer_names = self.net.getLayerNames()
         self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
 

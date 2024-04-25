@@ -10,26 +10,13 @@ print("[main thread] START")
 # Global
 RECORDING = True
 CENTER = 480, 300, 300
-command_queue = Queue()
 
 ###############################################
 ###     Drone Control in Worker Thread      ###
 ###############################################
 
-def fly(command_queue):
+def fly():
     print("[fly thread] START")
-    async def check_commands(drone):
-        while True:
-            if not command_queue.empty():
-                command = command_queue.get(block=False)
-                if command == 't_l':
-                    await drone.turn_counterclockwise(3)
-                elif command == 't_r':  # Corrected to 't_r' for turning right
-                    await drone.turn_clockwise(3)
-                else:
-                    await drone.turn_clockwise(0)
-                print(f"[fly thread] Processing command: {command}")
-            await asyncio.sleep(0.1)  # Small delay to prevent tight loop
 
     async def main():
         global RECORDING
@@ -37,12 +24,12 @@ def fly(command_queue):
         vertical = forwardBackward = rotation = 0
         drone = Tello()
         try:
-            await asyncio.sleep(1)
             await drone.connect()
             await drone.start_video(connect=False)
             await drone.takeoff()
+            asyncio.sleep(5)
             await drone.set_speed(10)
-            await drone.move_up(80)
+            await drone.move_up(60)
             while RECORDING:  # Use RECORDING to control the loop
                 x, y, w = CENTER
                 if x > 530:
@@ -77,7 +64,7 @@ def fly(command_queue):
 
     print("[fly thread] END")
 
-fly_thread = Thread(target=fly, daemon=True, args=(command_queue,))
+fly_thread = Thread(target=fly, daemon=True)
 fly_thread.start()
 
 #####################################################
