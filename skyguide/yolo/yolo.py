@@ -6,6 +6,7 @@ import numpy as np
 class yolo:
 
     def __init__(self, test_frame):
+        print(f'{__name__}: Loading YOLO model from {YOLO_WEIGHTS_PATH} and {YOLO_CFG_PATH}')
         self.net = cv2.dnn.readNet(YOLO_WEIGHTS_PATH, YOLO_CFG_PATH)
         layer_names = self.net.getLayerNames()
         self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
